@@ -136,9 +136,10 @@ async def main():
             continue
 
         if input_txt == "/rerun":
-            if messages[-1]["role"] == "assistant" and \
-               messages[-2]["role"] == "user":
+            if len(messages) > 1 and messages[-1]["role"] == "assistant" and messages[-2]["role"] == "user":
                 messages = messages[:-1]
+            elif len(messages) > 0 and messages[-1]["role"] == "user":
+                pass
             else:
                 print("Cannot rerun!")
                 continue
