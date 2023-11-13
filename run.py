@@ -5,6 +5,7 @@ import tiktoken
 from openai import AsyncOpenAI
 import logging
 import os
+import json
 
 cur_dir = os.path.dirname(__file__)
 logging.basicConfig(filename='chat.log', format='[%(asctime)s][%(levelname)s][%(name)s] %(message)s', encoding='utf-8', level=logging.DEBUG)
@@ -74,6 +75,11 @@ def num_tokens_from_messages(messages, model="gpt-3.5-turbo-0613"):
 from config import config
 
 async def main():
+    try:
+        with open("usage.json", "r") as f:
+            usage = json.load(f)
+    except FileNotFoundError:
+        usage = {}
     if config.proxies:
         openai.proxies = config.proxies
     if config.api_key is None:
@@ -180,6 +186,16 @@ async def main():
         prompt_len = num_tokens_from_messages(messages, model=current_model)
         completion_len = num_tokens_from_message(current_message, model=current_model)
         print(f"Calculated usage: prompt {prompt_len}, completion {completion_len}.")
+        if current_model not in usage:
+            usage[current_model] = {
+                "prompt": prompt_len,
+                "completion": completion_len,
+            }
+        else:
+            usage[current_model]["prompt"] += prompt_len
+            usage[current_model]["completion"] += completion_len
+        with open("usage.json", "w") as f:
+            json.dump(usage, f)
         messages.append({ "role": "assistant", "content": current_message })
         logging.info(f"Current messages: {messages}")
 
