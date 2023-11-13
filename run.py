@@ -1,6 +1,7 @@
 import asyncio
 import threading
 import openai
+import httpx
 import tiktoken
 from openai import AsyncOpenAI
 import logging
@@ -80,14 +81,17 @@ async def main():
             usage = json.load(f)
     except FileNotFoundError:
         usage = {}
-    if config.proxies:
-        openai.proxies = config.proxies
     if config.api_key is None:
         print("Please set your OpenAI API key in config.py.")
         return
-    client = AsyncOpenAI(
-        api_key=config.api_key,
-    )
+    if config.proxies:
+        print("Using proxies:", config.proxies)
+        client = AsyncOpenAI(
+            api_key=config.api_key,
+            http_client=httpx.AsyncClient(base_url="https://api.openai.com/v1", proxies=config.proxies),
+        )
+    else:
+        client = AsyncOpenAI(api_key=config.api_key)
     messages = []
     model = "gpt-3.5-turbo-1106"
     while True:
