@@ -154,19 +154,23 @@ async def main():
             })
 
         print_waiting_obj = PrintWaitingDots()
-        print_waiting_thread = threading.Thread(target=asyncio.run, args=(print_waiting_obj.run(),))
+        print_waiting_thread = threading.Thread(target=asyncio.run, args=(print_waiting_obj.run(),), daemon=True)
         print_waiting_thread.start()
 
-        stream_res = await client.chat.completions.create(
-            model=model,
-            messages=messages,
-            stream=True,
-            max_tokens=1024,
-            # temperature=1.2
-        )
-
-        print_waiting_obj.is_waiting = False
-        print_waiting_thread.join()
+        try:
+            stream_res = await client.chat.completions.create(
+                model=model,
+                messages=messages,
+                stream=True,
+                max_tokens=1024,
+                # temperature=1.2
+            )
+        except Exception as e:
+            print(f"Error: {e}")
+            continue
+        finally:
+            print_waiting_obj.is_waiting = False
+            print_waiting_thread.join()
 
         received_first = False
         current_message = ""
