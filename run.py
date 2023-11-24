@@ -74,13 +74,9 @@ def num_tokens_from_messages(messages, model="gpt-3.5-turbo-0613"):
     return num_tokens
 
 from config import config
+from usageManager import commit_usage
 
-async def main():
-    try:
-        with open("usage.json", "r") as f:
-            usage = json.load(f)
-    except FileNotFoundError:
-        usage = {}
+async def main(username="root"):
     if config.api_key is None:
         print("Please set your OpenAI API key in config.py.")
         return
@@ -195,16 +191,7 @@ async def main():
         prompt_len = num_tokens_from_messages(messages, model=current_model)
         completion_len = num_tokens_from_message(current_message, model=current_model)
         print(f"Calculated usage: prompt {prompt_len}, completion {completion_len}.")
-        if current_model not in usage:
-            usage[current_model] = {
-                "prompt": prompt_len,
-                "completion": completion_len,
-            }
-        else:
-            usage[current_model]["prompt"] += prompt_len
-            usage[current_model]["completion"] += completion_len
-        with open("usage.json", "w") as f:
-            json.dump(usage, f)
+        commit_usage(username, current_model, prompt_len, completion_len)
         messages.append({ "role": "assistant", "content": current_message })
         logging.info(f"Current messages: {messages}")
 
